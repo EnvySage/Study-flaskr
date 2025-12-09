@@ -132,3 +132,39 @@ input[type=submit] {
   align-self: start;
   min-width: 10em;
 }
+<<<<<<< HEAD
+=======
+/* 核心容器：控制整体布局 */
+.profile-header {
+  display: flex;                /* 弹性布局 */
+  align-items: center;          /* 所有子元素垂直居中 */
+  margin-bottom: 20px;          /* 和下方内容的间距 */
+  width: 100%;                  /* 占满父容器宽度 */
+  padding: 10px 0;              /* 上下留白 */
+  position: relative;           /* 为头像绝对居中做定位参考 */
+}
+
+/* h1 标题：固定在最左侧 */
+.profile-header h1 {
+  margin: 0;                    /* 清除默认 margin，避免布局错位 */
+  padding: 0;                   /* 清除多余 padding */
+  width: auto;                  /* 取消固定宽度，自适应标题内容 */
+  /* 可选：给标题加左侧留白，避免贴边 */
+  margin-left: 20px;
+}
+
+/* 头像：在整个容器正中间 */
+.avatar {
+  margin-top: 10px;
+  width: 80px;                  /* 头像尺寸 */
+  height: 80px;
+  border-radius: 50%;           /* 圆形头像 */
+  object-fit: cover;            /* 图片裁剪适配 */
+  border: 2px solid #eee;       /* 浅灰边框 */
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1); /* 轻微阴影 */
+  /* 核心：绝对定位实现居中，不受 h1 影响 */
+  position: absolute;
+  left: 45%;
+  /*transform: translateX(-50%);  !* 精准水平居中 *!*/
+}
+>>>>>>> 91b9c5b4cb0c62ffaf22d92a409b47f938b7a279

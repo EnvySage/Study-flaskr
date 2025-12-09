@@ -123,3 +123,21 @@ def delete(id):
     db.execute("DELETE FROM post WHERE id = ?", (id,))
     db.commit()
     return redirect(url_for("blog.index"))
+<<<<<<< HEAD
+=======
+
+
+@bp.route('/profile')
+def profile():
+    # 验证用户是否登录，未登录则跳转到登录页
+    if g.user is None:
+        return redirect(url_for('auth.login'))
+    # 渲染 templates 下的 user_profile.html
+    db = get_db()
+    posts = db.execute(
+        "SELECT p.id, title, body, created, author_id, username"
+        " FROM post p JOIN user u ON p.author_id = u.id"
+        " ORDER BY created DESC"
+    ).fetchall()
+    return render_template('blog/profile.html', posts=posts)
+>>>>>>> 91b9c5b4cb0c62ffaf22d92a409b47f938b7a279
