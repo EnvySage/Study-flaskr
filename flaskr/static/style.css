@@ -132,8 +132,7 @@ input[type=submit] {
   align-self: start;
   min-width: 10em;
 }
-<<<<<<< HEAD
-=======
+
 /* 核心容器：控制整体布局 */
 .profile-header {
   display: flex;                /* 弹性布局 */
@@ -167,4 +166,4 @@ input[type=submit] {
   left: 45%;
   /*transform: translateX(-50%);  !* 精准水平居中 *!*/
 }
->>>>>>> 91b9c5b4cb0c62ffaf22d92a409b47f938b7a279
+

@@ -48,7 +48,7 @@ Run
 .. code-block:: text
 
     $ flask --app flaskr init-db
-    $ flask --app flaskr run --debug
+    $ flask --app flaskr run git branch -M main--debug
 
 Open http://127.0.0.1:5000 in a browser.
 

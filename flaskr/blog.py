@@ -123,8 +123,6 @@ def delete(id):
     db.execute("DELETE FROM post WHERE id = ?", (id,))
     db.commit()
     return redirect(url_for("blog.index"))
-<<<<<<< HEAD
-=======
 
 
 @bp.route('/profile')
@@ -140,4 +138,3 @@ def profile():
         " ORDER BY created DESC"
     ).fetchall()
     return render_template('blog/profile.html', posts=posts)
->>>>>>> 91b9c5b4cb0c62ffaf22d92a409b47f938b7a279
