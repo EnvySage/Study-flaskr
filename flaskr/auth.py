@@ -126,8 +126,8 @@ def upload_avatar():
         return redirect(url_for('blog.user_profile', username=g.user['username']))
     
     file = request.files['avatar']
-    if file.filename == '' or file.content_length == 0:
-        flash('No file selected')
+    if file.filename == '':
+        flash('请选择要上传的文件')
         return redirect(url_for('blog.user_profile', username=g.user['username']))
     
     # Check file extension
@@ -146,27 +146,27 @@ def upload_avatar():
     from werkzeug.utils import secure_filename
     
     # Create avatars directory if it doesn't exist
-    import os
     from flask import current_app
     avatars_dir = os.path.join(current_app.root_path, 'static', 'avatars')
     if not os.path.exists(avatars_dir):
         os.makedirs(avatars_dir)
     
     # Save file with user id as filename
-    filename = secure_filename(file.filename)
-    filepath = os.path.join(avatars_dir, str(g.user['user_id']) + '.png')
+    # 保持原始文件扩展名
+    file_ext = os.path.splitext(file.filename)[1].lower()
+    if file_ext not in ['.jpg', '.jpeg', '.png']:
+        file_ext = '.png'  # 默认使用png
     
-    # Convert to PNG format
-    from PIL import Image
+    filename = str(g.user['user_id']) + file_ext
+    filepath = os.path.join(avatars_dir, filename)
+    
+    # 直接保存文件，不进行图片处理
     try:
-        img = Image.open(file.stream)
-        img = img.convert('RGBA')
-        img.save(filepath, 'PNG')
+        file.save(filepath)
+        flash('头像上传成功！')
     except Exception as e:
-        flash('Error processing image: ' + str(e))
-        return redirect(url_for('blog.user_profile', username=g.user['username']))
+        flash('上传失败：' + str(e))
     
-    flash('Avatar uploaded successfully!')
     return redirect(url_for('blog.user_profile', username=g.user['username']))
 
 @bp.route("/crop_avatar", methods=("POST",))
