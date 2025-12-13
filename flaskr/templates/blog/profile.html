@@ -2,7 +2,6 @@
 
 {% block header %}
   <!-- 新增头像+标题的容器，方便布局 -->
-
   <div class="profile-header">
     <h1>{% block title %}profile{% endblock %}</h1>
     <!-- 显示用户头像：仅登录用户可见 -->
@@ -10,7 +9,7 @@
   {# 先把默认头像的URL预渲染成变量，避免属性内嵌套冲突 #}
   {% set default_avatar = url_for('static', filename='avatars/default.png') %}
   <img
-    src="{{ url_for('static', filename='avatars/' ~ g.user['id'] ~ '.png') }}"
+    src="{{ url_for('static',filename='avatars/' ~ g.user['id'] ~ '.png') }}"
     alt="{{ g.user['username'] }} 的头像"
     class="avatar"
     {# 用预定义的变量，避免引号嵌套 #}
@@ -21,26 +20,64 @@
   </div>
   <!-- 注释掉的 New 按钮保持不变 -->
 <!--  {% if g.user %}-->
-<!--    <a class="action" href="{{ url_for('blog.create') }}">New</a>-->
+<!--    <a class="action" href="{{ url_for('blog.create') }}">New</a>--> 
 <!--  {% endif %}-->
 {% endblock %}
 
 {% block content %}
-  {% for post in posts %}
-    <article class="post">
-      <header>
-        <div>
-          <h1>{{ post['title'] }}</h1>
-          <div class="about">by {{ post['username'] }} on {{ post['created'].strftime('%Y-%m-%d') }}</div>
-        </div>
-        {% if g.user['id'] == post['author_id'] %}
-          <a class="action" href="{{ url_for('blog.update', id=post['id']) }}">Edit</a>
-        {% endif %}
-      </header>
-      <p class="body">{{ post['body'] }}</p>
-    </article>
-    {% if not loop.last %}
-      <hr>
-    {% endif %}
-  {% endfor %}
+  <!-- 用户基本信息展示 -->
+  <div class="user-info">
+    <h2>{{ g.user['username'] }}</h2>
+    <p><strong>作品数量：</strong>{{ posts|length }}</p>
+    <p><strong>个人简介：</strong>{{ g.user['bio'] or '暂无简介' }}</p>
+  </div>
+
+  <!-- 头像上传和预览功能 -->
+  <div class="avatar-upload">
+    <h3>头像管理</h3>
+    <form method="post" action="{{ url_for('auth.upload_avatar') }}" enctype="multipart/form-data">
+      <div class="avatar-preview">
+        <img id="avatar-preview" src="{{ url_for('static', filename='avatars/' ~ g.user['id'] ~ '.png') }}" alt="头像预览" style="max-width: 200px; max-height: 200px;">
+      </div>
+      <div class="upload-controls">
+        <label for="avatar">选择头像图片:</label>
+        <input type="file" id="avatar" name="avatar" accept="image/jpeg,image/png" onchange="previewImage(this)" required>
+        <button type="submit" class="btn">上传头像</button>
+      </div>
+    </form>
+    <script>
+      function previewImage(input) {
+        if (input.files && input.files[0]) {
+          var reader = new FileReader();
+          reader.onload = function(e) {
+            document.getElementById('avatar-preview').src = e.target.result;
+          };
+          reader.readAsDataURL(input.files[0]);
+        }
+      }
+    </script>
+  </div>
+
+  <!-- 用户最近发布的5条作品 -->
+  <div class="recent-posts">
+    <h3>最近发布的作品</h3>
+    {% for post in posts[:5] %}
+      <article class="post">
+        <header>
+          <div>
+            <h4>{{ post['title'] }}</h4>
+            <div class="about">发布于 {{ post['created'].strftime('%Y-%m-%d') }}, 浏览量: {{ post['views'] or 0 }}</div>
+          </div>
+          {% if g.user['id'] == post['author_id'] %}
+            <a class="action" href="{{ url_for('blog.update', id=post['id']) }}">Edit</a>
+          {% endif %}
+        </header>
+        <p class="body">{{ post['body']|truncate(100) }}</p>
+      </article>
+      {% if not loop.last %}
+        <hr>
+      {% endif %}
+    {% endfor %}
+  </div>
 {% endblock %}
+```
