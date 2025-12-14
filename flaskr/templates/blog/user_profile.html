@@ -1,10 +1,10 @@
 {% extends 'base.html' %}
-
+{% set default_avatar = url_for('static', filename='avatars/default.png') %}
 {% block header %}
   <div class="profile-header">
     <h1>{% block title %}{{ profile_user.username }}的个人空间{% endblock %}</h1>
     <!-- 显示用户头像 -->
-    {% set default_avatar = url_for('static', filename='avatars/default.png') %}
+
     <img
       src="{{ default_avatar }}"
       alt="{{ profile_user.username }} 的头像"
@@ -16,7 +16,7 @@
       document.addEventListener('DOMContentLoaded', function() {
         const avatar = document.querySelector('.profile-header .avatar');
         const userId = avatar.dataset.userId;
-        
+
         // 尝试加载PNG格式的头像
         const pngAvatar = new Image();
         pngAvatar.onload = function() {
@@ -37,7 +37,7 @@
         pngAvatar.src = '/static/avatars/' + userId + '.png';
       });
     </script>
-    
+
     <!-- 编辑资料按钮（仅本人可见） -->
     {% if g.user and g.user.user_id == profile_user.user_id %}
       <div class="profile-actions">
@@ -66,7 +66,7 @@
           document.addEventListener('DOMContentLoaded', function() {
             const sidebarAvatar = document.querySelector('.sidebar-avatar');
             const userId = sidebarAvatar.dataset.userId;
-            
+
             // 尝试加载PNG格式的头像
             const pngAvatar = new Image();
             pngAvatar.onload = function() {
@@ -120,55 +120,69 @@
 
     <!-- 头像管理（仅本人可见） -->
     {% if g.user and g.user.user_id == profile_user.user_id %}
-    <div class="avatar-management">
-      <h3>头像管理</h3>
-      <div class="avatar-preview">
-        <img 
-          src="{{ default_avatar }}" 
-          alt="当前头像" 
-          class="preview-avatar"
-          data-user-id="{{ profile_user.user_id }}"
-        >
-        <script>
-          // 头像预览处理
-          document.addEventListener('DOMContentLoaded', function() {
-            const previewAvatar = document.querySelector('.preview-avatar');
-            const userId = previewAvatar.dataset.userId;
-            
-            // 尝试加载PNG格式的头像
-            const pngAvatar = new Image();
-            pngAvatar.onload = function() {
-              previewAvatar.src = pngAvatar.src;
-            };
-            pngAvatar.onerror = function() {
-              // PNG加载失败，尝试JPG格式
-              const jpgAvatar = new Image();
-              jpgAvatar.onload = function() {
-                previewAvatar.src = jpgAvatar.src;
-              };
-              jpgAvatar.onerror = function() {
-                // JPG也加载失败，保持默认头像
-                console.log('预览区域使用默认头像');
-              };
-              jpgAvatar.src = '/static/avatars/' + userId + '.jpg';
-            };
-            pngAvatar.src = '/static/avatars/' + userId + '.png';
-          });
-        </script>
-      </div>
-      <form method="post" action="{{ url_for('auth.upload_avatar') }}" enctype="multipart/form-data" class="upload-form">
-        <div class="upload-controls">
-          <label for="avatar">选择头像图片 (支持JPG/PNG，最大2MB):</label>
-          <input type="file" id="avatar" name="avatar" accept="image/jpeg,image/png" required>
-          <button type="submit" class="btn btn-primary">上传头像</button>
-        </div>
-      </form>
-      <div class="avatar-actions">
-        <a href="{{ url_for('auth.reset_avatar') }}" class="btn" onclick="return confirm('确定要恢复默认头像吗？')">恢复默认头像</a>
-      </div>
-      <p class="help-text">上传的头像将保存到项目文件夹中</p>
+<div class="avatar-management">
+  <h3>头像管理</h3>
+  <div class="avatar-preview">
+    <img
+      src="{{ default_avatar }}"
+      alt="当前头像"
+      class="preview-avatar"
+      data-user-id="{{ profile_user.user_id }}"
+    >
+    <script>
+      // 原有头像加载逻辑保留
+      document.addEventListener('DOMContentLoaded', function() {
+        const previewAvatar = document.querySelector('.preview-avatar');
+        const userId = previewAvatar.dataset.userId;
+
+        const pngAvatar = new Image();
+        pngAvatar.onload = function() {
+          previewAvatar.src = pngAvatar.src;
+        };
+        pngAvatar.onerror = function() {
+          const jpgAvatar = new Image();
+          jpgAvatar.onload = function() {
+            previewAvatar.src = jpgAvatar.src;
+          };
+          jpgAvatar.onerror = function() {
+            console.log('预览区域使用默认头像');
+          };
+          jpgAvatar.src = '/static/avatars/' + userId + '.jpg';
+        };
+        pngAvatar.src = '/static/avatars/' + userId + '.png';
+      });
+    </script>
+  </div>
+
+  <!-- 替换原上传表单 -->
+  <div class="upload-form">
+    <div class="upload-controls">
+      <label for="avatar">选择头像图片 (支持JPG/PNG，最大2MB):</label>
+      <input type="file" id="avatar" name="avatar" accept="image/jpeg,image/png" required>
+      <button type="button" class="btn btn-primary" id="openCropperBtn">上传图片</button>
     </div>
-    {% endif %}
+  </div>
+
+  <!-- 裁剪弹窗（默认隐藏） -->
+  <div id="cropperModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center;">
+    <div style="background: white; padding: 20px; border-radius: 8px; width: 80%; max-width: 800px;">
+      <h3 style="margin-top: 0;">裁剪你的头像</h3>
+      <div style="position: relative; width: 100%; height: 400px; margin: 20px 0; border: 1px solid #ddd;">
+        <img id="cropperImage" src="" style="max-width: 100%; max-height: 100%;">
+      </div>
+      <div style="display: flex; gap: 10px; justify-content: center;">
+        <button type="button" class="btn" id="cancelCropper">取消</button>
+        <button type="button" class="btn btn-primary" id="confirmCropper">确认上传</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="avatar-actions">
+    <a href="{{ url_for('auth.reset_avatar') }}" class="btn" onclick="return confirm('确定要恢复默认头像吗？')">恢复默认头像</a>
+  </div>
+  <p class="help-text">上传的头像将保存到项目文件夹中</p>
+</div>
+{% endif %}
   </aside>
 
   <!-- 右侧主内容区 - 文章列表 -->
@@ -226,5 +240,133 @@
   </main>
 </div>
 
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // 变量初始化
+  const avatarInput = document.getElementById('avatar');
+  const openCropperBtn = document.getElementById('openCropperBtn');
+  const cropperModal = document.getElementById('cropperModal');
+  const cropperImage = document.getElementById('cropperImage');
+  const cancelCropper = document.getElementById('cancelCropper');
+  const confirmCropper = document.getElementById('confirmCropper');
+  let cropper = null;
+  let selectedFile = null;
 
+  // 选择文件后保存文件对象
+  avatarInput.addEventListener('change', function(e) {
+    if (e.target.files.length > 0) {
+      selectedFile = e.target.files[0];
+      // 验证文件大小（2MB）
+      const maxSize = 2 * 1024 * 1024;
+      if (selectedFile.size > maxSize) {
+        alert('图片大小不能超过2MB！');
+        this.value = '';
+        selectedFile = null;
+        return;
+      }
+    } else {
+      selectedFile = null;
+    }
+  });
+
+  // 打开裁剪弹窗
+  openCropperBtn.addEventListener('click', function() {
+    if (!selectedFile) {
+      alert('请先选择要上传的头像图片！');
+      return;
+    }
+
+    // 读取文件并显示到裁剪容器
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      cropperImage.src = e.target.result;
+      cropperModal.style.display = 'flex';
+
+      // 初始化裁剪器（固定1:1比例，适合头像）
+      if (cropper) {
+        cropper.destroy(); // 销毁旧的裁剪实例
+      }
+      cropper = new Cropper(cropperImage, {
+        aspectRatio: 1 / 1, // 1:1 正方形
+        viewMode: 1,
+        dragMode: 'move',
+        scalable: true,
+        zoomable: true,
+        cropBoxResizable: true,
+        cropBoxMovable: true,
+        minContainerWidth: 300,
+        minContainerHeight: 300
+      });
+    };
+    reader.readAsDataURL(selectedFile);
+  });
+
+  // 取消裁剪
+  cancelCropper.addEventListener('click', function() {
+    if (cropper) {
+      cropper.destroy();
+      cropper = null;
+    }
+    cropperModal.style.display = 'none';
+    avatarInput.value = ''; // 清空文件选择
+    selectedFile = null;
+  });
+
+  // 确认裁剪并上传
+  confirmCropper.addEventListener('click', function() {
+    if (!cropper) return;
+
+    // 获取裁剪后的图片数据（base64格式）
+    const croppedCanvas = cropper.getCroppedCanvas({
+      width: 200,  // 最终头像宽度
+      height: 200, // 最终头像高度
+      minWidth: 100,
+      minHeight: 100,
+      maxWidth: 500,
+      maxHeight: 500,
+      fillColor: '#fff'
+    });
+
+    // 将canvas转为Blob对象
+    croppedCanvas.toBlob(function(blob) {
+      // 构造FormData（模拟表单提交）
+      const formData = new FormData();
+      formData.append('avatar', blob, selectedFile.name); // 保留原文件名
+
+      // 发送AJAX请求上传裁剪后的头像
+      fetch("{{ url_for('auth.upload_avatar') }}", {
+        method: 'POST',
+        body: formData,
+        credentials: 'same-origin' // 携带cookie（保持登录状态）
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          alert('头像上传成功！');
+          // 关闭弹窗并刷新页面（更新头像）
+          cropperModal.style.display = 'none';
+          cropper.destroy();
+          cropper = null;
+          avatarInput.value = '';
+          selectedFile = null;
+          window.location.reload(); // 刷新页面
+        } else {
+          alert('上传失败：' + data.message);
+        }
+      })
+      .catch(error => {
+        console.error('上传错误：', error);
+        alert('头像上传失败，请重试！');
+      });
+    }, selectedFile.type || 'image/png'); // 保持原文件格式
+  });
+
+  // 点击弹窗外层关闭
+  cropperModal.addEventListener('click', function(e) {
+    if (e.target === cropperModal) {
+      cancelCropper.click();
+    }
+  });
+});
+</script>
 {% endblock %}

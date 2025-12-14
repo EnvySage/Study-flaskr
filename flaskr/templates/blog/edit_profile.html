@@ -7,26 +7,30 @@
 
 {% block content %}
   <form method="post" class="edit-profile-form">
-    <div class="form-group">
-      <label for="nickname">昵称 (2-20个字符):</label>
-      <input type="text" name="nickname" id="nickname" 
-             value="{{ user.username or '' }}" 
-             required minlength="2" maxlength="20"
-             oninput="checkNickname(this.value)">
-      <span id="nickname-status" class="status-message"></span>
-    </div>
+  <div class="form-group">
+      <label for="nickname">昵称 (1-20个字符):</label>
+      <input type="text"
+         name="nickname"
+         id="nickname"
+         value="{{ user.username or '' }}"
+         required
+         minlength="1"
+         maxlength="20"
+         oninput="checkNickname(this.value)" />
+       <span id="nickname-status" class="status-message"></span>
+</div>
 
     <div class="form-group">
       <label for="bio">个人简介 (最多500字符):</label>
-      <textarea name="bio" id="bio" maxlength="500" 
+      <textarea name="bio" id="bio" maxlength="500"
                 placeholder="介绍一下你自己...">{{ user.bio or '' }}</textarea>
       <div class="char-count">已输入 <span id="bio-count">0</span>/500 字符</div>
     </div>
 
     <div class="form-group">
       <label for="contact">联系方式 (可选):</label>
-      <input type="text" name="contact" id="contact" 
-             value="{{ user.contact_info or '' }}" 
+      <input type="text" name="contact" id="contact"
+             value="{{ user.contact_info or '' }}"
              maxlength="200" placeholder="邮箱、微信、电话等">
     </div>
 
@@ -50,13 +54,14 @@
     let nicknameCheckTimeout;
     function checkNickname(nickname) {
       clearTimeout(nicknameCheckTimeout);
-      
-      if (nickname.length < 2) {
-        document.getElementById('nickname-status').textContent = '昵称至少需要2个字符';
+
+      // 调整长度校验：最小1个字符
+      if (nickname.length < 1) {
+        document.getElementById('nickname-status').textContent = '昵称至少需要1个字符';
         document.getElementById('nickname-status').className = 'status-message error';
         return;
       }
-      
+
       if (nickname.length > 20) {
         document.getElementById('nickname-status').textContent = '昵称不能超过20个字符';
         document.getElementById('nickname-status').className = 'status-message error';
@@ -73,19 +78,21 @@
             },
             body: `nickname=${encodeURIComponent(nickname)}`
           });
-          
+
           const result = await response.json();
           const statusElement = document.getElementById('nickname-status');
-          
+
           if (result.available) {
-            statusElement.textContent = '✓ 昵称可用';
+            statusElement.textContent = '昵称可用';
             statusElement.className = 'status-message success';
           } else {
-            statusElement.textContent = '✗ 昵称已被使用';
+            statusElement.textContent = '昵称已被使用';
             statusElement.className = 'status-message error';
           }
         } catch (error) {
           console.error('检查昵称时出错:', error);
+          // 出错时清空提示，避免误导用户
+          document.getElementById('nickname-status').textContent = '';
         }
       }, 500);
     }

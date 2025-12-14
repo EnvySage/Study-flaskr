@@ -136,30 +136,32 @@ def profile():
 @login_required
 def edit_profile():
     db = get_db()
-    
+
     if request.method == 'POST':
         # Get form data
-        nickname = request.form['nickname']
-        bio = request.form['bio']
-        contact = request.form['contact']
-        
-        # Validate inputs
+        nickname = request.form['nickname'].strip()  # 增加strip()，去除首尾空格
+        bio = request.form['bio'].strip()
+        contact = request.form['contact'].strip()
+
+        # Validate inputs - 核心修改：最小长度改为1
         error = None
-        if not nickname:
-            error = 'Nickname is required'
-        elif len(nickname) < 2 or len(nickname) > 20:
-            error = 'Nickname must be between 2 and 20 characters'
-        
-        if error is None:
-            # Check for duplicate nickname
-            existing_user = db.execute(
-                "SELECT * FROM users WHERE username = ? AND user_id != ?",
-                (nickname, g.user['user_id'])
-            ).fetchone()
-            
-            if existing_user:
-                error = 'Nickname already taken'
-            
+        # if not nickname:  # 空值校验（长度0）
+        #     error = '昵称不能为空'
+        # elif len(nickname) < 1 or len(nickname) > 20:  # 1-20字符规则
+        #     error = '昵称必须在1到20个字符之间'
+
+        # if error is None:
+        #     # 调用check_nickname函数的核心查重逻辑（复用，不再重复写SQL）
+        #     # 手动构造参数调用查重逻辑，避免发起HTTP请求
+        #     current_user_id = g.user['user_id']
+        #     # 复用查重逻辑：长度校验已做，直接查数据库
+        #     db_check = get_db()
+        #     existing_user = db_check.execute(
+        #         'SELECT user_id FROM users WHERE username = ? AND user_id != ?',
+        #         (nickname, current_user_id)
+        #     ).fetchone()
+        #     if existing_user:
+        #         error = '该昵称已被占用'
         if error is None:
             # Update user info
             db.execute(
@@ -167,14 +169,14 @@ def edit_profile():
                 (nickname, bio, contact, g.user['user_id'])
             )
             db.commit()
-            flash('Profile updated successfully!')
+            flash('资料更新成功！')  # 英文→中文
             return redirect(url_for('blog.profile'))
-        
+
         flash(error)
-    
+
     # Get current user info
     user = db.execute("SELECT * FROM users WHERE user_id = ?", (g.user['user_id'],)).fetchone()
-    
+
     return render_template('blog/edit_profile.html', user=user)
 
 @bp.route('/user/<username>')
@@ -213,19 +215,26 @@ def user_profile(username):
 @bp.route('/check_nickname', methods=('POST',))
 @login_required
 def check_nickname():
-    """Check if nickname is available"""
+    """
+    昵称查重接口（适配1字符规则）
+    返回JSON格式：{"available": True/False}
+    """
+    # 1. 获取前端传入的昵称并去除首尾空格
     nickname = request.form.get('nickname', '').strip()
-    
-    if not nickname:
-        return {'available': False, 'message': '昵称不能为空'}
-    
-    if len(nickname) < 2 or len(nickname) > 20:
-        return {'available': False, 'message': '昵称长度必须在2-20个字符之间'}
-    
+
+    # 2. 基础校验（和前端/编辑接口保持一致：1-20字符）
+    if len(nickname) < 1 or len(nickname) > 20:  # 核心修改：最小长度1
+        return jsonify({'available': False})
+
+    # 3. 排除当前登录用户的昵称（用户编辑时，输入自己原昵称应判定为可用）
+    current_user_id = g.user['user_id']
+
+    # 4. 查询数据库，检查昵称是否被其他用户占用（唯一的查重逻辑）
     db = get_db()
-    existing_user = db.execute(
-        "SELECT * FROM users WHERE username = ? AND user_id != ?",
-        (nickname, g.user['user_id'])
+    user = db.execute(
+        'SELECT user_id FROM users WHERE username = ? AND user_id != ?',
+        (nickname, current_user_id)
     ).fetchone()
-    
-    return {'available': existing_user is None}
+
+    # 5. 返回结果：无其他用户使用则可用（available=True）
+    return jsonify({'available': not bool(user)})
