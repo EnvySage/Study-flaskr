@@ -1,0 +1,177 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <h1>{% block title %}编辑个人资料{% endblock %}</h1>
+  <a class="action" href="{{ url_for('blog.user_profile', username=g.user.username) }}">返回个人空间</a>
+{% endblock %}
+
+{% block content %}
+  <form method="post" class="edit-profile-form">
+    <div class="form-group">
+      <label for="nickname">昵称 (2-20个字符):</label>
+      <input type="text" name="nickname" id="nickname" 
+             value="{{ user.username or '' }}" 
+             required minlength="2" maxlength="20"
+             oninput="checkNickname(this.value)">
+      <span id="nickname-status" class="status-message"></span>
+    </div>
+
+    <div class="form-group">
+      <label for="bio">个人简介 (最多500字符):</label>
+      <textarea name="bio" id="bio" maxlength="500" 
+                placeholder="介绍一下你自己...">{{ user.bio or '' }}</textarea>
+      <div class="char-count">已输入 <span id="bio-count">0</span>/500 字符</div>
+    </div>
+
+    <div class="form-group">
+      <label for="contact">联系方式 (可选):</label>
+      <input type="text" name="contact" id="contact" 
+             value="{{ user.contact_info or '' }}" 
+             maxlength="200" placeholder="邮箱、微信、电话等">
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary">保存修改</button>
+      <a href="{{ url_for('blog.user_profile', username=g.user.username) }}" class="btn btn-secondary">取消</a>
+    </div>
+  </form>
+
+  <script>
+    // 实时字符计数
+    document.getElementById('bio').addEventListener('input', function() {
+      const count = this.value.length;
+      document.getElementById('bio-count').textContent = count;
+    });
+
+    // 初始化字符计数
+    document.getElementById('bio-count').textContent = document.getElementById('bio').value.length;
+
+    // 昵称重复检查
+    let nicknameCheckTimeout;
+    function checkNickname(nickname) {
+      clearTimeout(nicknameCheckTimeout);
+      
+      if (nickname.length < 2) {
+        document.getElementById('nickname-status').textContent = '昵称至少需要2个字符';
+        document.getElementById('nickname-status').className = 'status-message error';
+        return;
+      }
+      
+      if (nickname.length > 20) {
+        document.getElementById('nickname-status').textContent = '昵称不能超过20个字符';
+        document.getElementById('nickname-status').className = 'status-message error';
+        return;
+      }
+
+      // 延迟检查，避免频繁请求
+      nicknameCheckTimeout = setTimeout(async () => {
+        try {
+          const response = await fetch('/check_nickname', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `nickname=${encodeURIComponent(nickname)}`
+          });
+          
+          const result = await response.json();
+          const statusElement = document.getElementById('nickname-status');
+          
+          if (result.available) {
+            statusElement.textContent = '✓ 昵称可用';
+            statusElement.className = 'status-message success';
+          } else {
+            statusElement.textContent = '✗ 昵称已被使用';
+            statusElement.className = 'status-message error';
+          }
+        } catch (error) {
+          console.error('检查昵称时出错:', error);
+        }
+      }, 500);
+    }
+
+    // 表单提交前验证
+    document.querySelector('form').addEventListener('submit', function(e) {
+      const nickname = document.getElementById('nickname').value;
+      const statusElement = document.getElementById('nickname-status');
+      
+      if (statusElement.className.includes('error')) {
+        e.preventDefault();
+        alert('请先解决表单中的错误');
+      }
+    });
+  </script>
+
+  <style>
+    .edit-profile-form {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: bold;
+    }
+    
+    input[type="text"], textarea {
+      width: 100%;
+      padding: 0.5rem;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 1rem;
+    }
+    
+    textarea {
+      height: 120px;
+      resize: vertical;
+    }
+    
+    .char-count {
+      font-size: 0.8rem;
+      color: #666;
+      margin-top: 0.25rem;
+    }
+    
+    .status-message {
+      font-size: 0.8rem;
+      margin-top: 0.25rem;
+    }
+    
+    .status-message.success {
+      color: #28a745;
+    }
+    
+    .status-message.error {
+      color: #dc3545;
+    }
+    
+    .form-actions {
+      margin-top: 2rem;
+      text-align: center;
+    }
+    
+    .btn {
+      padding: 0.5rem 1rem;
+      border: none;
+      border-radius: 4px;
+      text-decoration: none;
+      cursor: pointer;
+      margin: 0 0.5rem;
+    }
+    
+    .btn-primary {
+      background-color: #007bff;
+      color: white;
+    }
+    
+    .btn-secondary {
+      background-color: #6c757d;
+      color: white;
+    }
+  </style>
+{% endblock %}

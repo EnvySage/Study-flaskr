@@ -1,0 +1,230 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <div class="profile-header">
+    <h1>{% block title %}{{ profile_user.username }}的个人空间{% endblock %}</h1>
+    <!-- 显示用户头像 -->
+    {% set default_avatar = url_for('static', filename='avatars/default.png') %}
+    <img
+      src="{{ default_avatar }}"
+      alt="{{ profile_user.username }} 的头像"
+      class="avatar"
+      data-user-id="{{ profile_user.user_id }}"
+    >
+    <script>
+      // 页面加载后尝试加载自定义头像
+      document.addEventListener('DOMContentLoaded', function() {
+        const avatar = document.querySelector('.profile-header .avatar');
+        const userId = avatar.dataset.userId;
+        
+        // 尝试加载PNG格式的头像
+        const pngAvatar = new Image();
+        pngAvatar.onload = function() {
+          avatar.src = pngAvatar.src;
+        };
+        pngAvatar.onerror = function() {
+          // PNG加载失败，尝试JPG格式
+          const jpgAvatar = new Image();
+          jpgAvatar.onload = function() {
+            avatar.src = jpgAvatar.src;
+          };
+          jpgAvatar.onerror = function() {
+            // JPG也加载失败，保持默认头像
+            console.log('使用默认头像');
+          };
+          jpgAvatar.src = '/static/avatars/' + userId + '.jpg';
+        };
+        pngAvatar.src = '/static/avatars/' + userId + '.png';
+      });
+    </script>
+    
+    <!-- 编辑资料按钮（仅本人可见） -->
+    {% if g.user and g.user.user_id == profile_user.user_id %}
+      <div class="profile-actions">
+        <a class="btn btn-primary" href="{{ url_for('blog.edit_profile') }}">编辑资料</a>
+        <a class="btn" href="{{ url_for('blog.create') }}">写新文章</a>
+      </div>
+    {% endif %}
+  </div>
+{% endblock %}
+
+{% block content %}
+<div class="profile-layout">
+  <!-- 左侧侧边栏 - 用户信息 -->
+  <aside class="profile-sidebar">
+    <!-- 用户基本信息卡片 -->
+    <div class="user-card">
+      <div class="user-avatar">
+        <img
+          src="{{ default_avatar }}"
+          alt="{{ profile_user.username }} 的头像"
+          class="sidebar-avatar"
+          data-user-id="{{ profile_user.user_id }}"
+        >
+        <script>
+          // 侧边栏头像处理
+          document.addEventListener('DOMContentLoaded', function() {
+            const sidebarAvatar = document.querySelector('.sidebar-avatar');
+            const userId = sidebarAvatar.dataset.userId;
+            
+            // 尝试加载PNG格式的头像
+            const pngAvatar = new Image();
+            pngAvatar.onload = function() {
+              sidebarAvatar.src = pngAvatar.src;
+            };
+            pngAvatar.onerror = function() {
+              // PNG加载失败，尝试JPG格式
+              const jpgAvatar = new Image();
+              jpgAvatar.onload = function() {
+                sidebarAvatar.src = jpgAvatar.src;
+              };
+              jpgAvatar.onerror = function() {
+                // JPG也加载失败，保持默认头像
+                console.log('侧边栏使用默认头像');
+              };
+              jpgAvatar.src = '/static/avatars/' + userId + '.jpg';
+            };
+            pngAvatar.src = '/static/avatars/' + userId + '.png';
+          });
+        </script>
+      </div>
+      <div class="user-details">
+        <h2>{{ profile_user.username }}</h2>
+        <div class="user-stats">
+          <div class="stat-item">
+            <span class="stat-number">{{ post_count }}</span>
+            <span class="stat-label">文章</span>
+          </div>
+        </div>
+        <div class="user-info">
+          <p><strong>注册时间：</strong>
+            {% if profile_user.registration_time %}
+              {% if profile_user.registration_time is string %}
+                {{ profile_user.registration_time[:10] }}
+              {% else %}
+                {{ profile_user.registration_time.strftime('%Y-%m-%d') }}
+              {% endif %}
+            {% else %}
+              未知
+            {% endif %}
+          </p>
+          {% if profile_user.bio %}
+            <p><strong>个人简介：</strong>{{ profile_user.bio }}</p>
+          {% endif %}
+          {% if profile_user.contact_info %}
+            <p><strong>联系方式：</strong>{{ profile_user.contact_info }}</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- 头像管理（仅本人可见） -->
+    {% if g.user and g.user.user_id == profile_user.user_id %}
+    <div class="avatar-management">
+      <h3>头像管理</h3>
+      <div class="avatar-preview">
+        <img 
+          src="{{ default_avatar }}" 
+          alt="当前头像" 
+          class="preview-avatar"
+          data-user-id="{{ profile_user.user_id }}"
+        >
+        <script>
+          // 头像预览处理
+          document.addEventListener('DOMContentLoaded', function() {
+            const previewAvatar = document.querySelector('.preview-avatar');
+            const userId = previewAvatar.dataset.userId;
+            
+            // 尝试加载PNG格式的头像
+            const pngAvatar = new Image();
+            pngAvatar.onload = function() {
+              previewAvatar.src = pngAvatar.src;
+            };
+            pngAvatar.onerror = function() {
+              // PNG加载失败，尝试JPG格式
+              const jpgAvatar = new Image();
+              jpgAvatar.onload = function() {
+                previewAvatar.src = jpgAvatar.src;
+              };
+              jpgAvatar.onerror = function() {
+                // JPG也加载失败，保持默认头像
+                console.log('预览区域使用默认头像');
+              };
+              jpgAvatar.src = '/static/avatars/' + userId + '.jpg';
+            };
+            pngAvatar.src = '/static/avatars/' + userId + '.png';
+          });
+        </script>
+      </div>
+      <form method="post" action="{{ url_for('auth.upload_avatar') }}" enctype="multipart/form-data" class="upload-form">
+        <div class="upload-controls">
+          <label for="avatar">选择头像图片 (支持JPG/PNG，最大2MB):</label>
+          <input type="file" id="avatar" name="avatar" accept="image/jpeg,image/png" required>
+          <button type="submit" class="btn btn-primary">上传头像</button>
+        </div>
+      </form>
+      <div class="avatar-actions">
+        <a href="{{ url_for('auth.reset_avatar') }}" class="btn" onclick="return confirm('确定要恢复默认头像吗？')">恢复默认头像</a>
+      </div>
+      <p class="help-text">上传的头像将保存到项目文件夹中</p>
+    </div>
+    {% endif %}
+  </aside>
+
+  <!-- 右侧主内容区 - 文章列表 -->
+  <main class="profile-main">
+    <div class="posts-section">
+      <div class="section-header">
+        <h2>最近发布</h2>
+        {% if g.user and g.user.user_id == profile_user.user_id %}
+          <a class="btn btn-primary" href="{{ url_for('blog.create') }}">写新文章</a>
+        {% endif %}
+      </div>
+
+      {% if posts %}
+        <div class="posts-list">
+          {% for post in posts %}
+            <article class="post-card">
+              <div class="post-header">
+                <h3><a href="{{ url_for('blog.index') }}#post-{{ post.id }}">{{ post.title }}</a></h3>
+                <div class="post-meta">
+                  <span class="post-date">
+                    {% if post.created %}
+                      {% if post.created is string %}
+                        {{ post.created[:10] }}
+                      {% else %}
+                        {{ post.created.strftime('%Y-%m-%d') }}
+                      {% endif %}
+                    {% else %}
+                      未知时间
+                    {% endif %}
+                  </span>
+                  {% if g.user and g.user.user_id == post.author_id %}
+                    <a class="edit-link" href="{{ url_for('blog.update', id=post.id) }}">编辑</a>
+                  {% endif %}
+                </div>
+              </div>
+              <div class="post-excerpt">
+                <p>{{ post.body|truncate(200) }}</p>
+              </div>
+              <div class="post-footer">
+                <a href="{{ url_for('blog.index') }}#post-{{ post.id }}" class="read-more">阅读全文</a>
+              </div>
+            </article>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty-state">
+          <h3>还没有发布任何文章</h3>
+          <p>开始创作你的第一篇文章吧！</p>
+          {% if g.user and g.user.user_id == profile_user.user_id %}
+            <a class="btn btn-primary" href="{{ url_for('blog.create') }}">开始写作</a>
+          {% endif %}
+        </div>
+      {% endif %}
+    </div>
+  </main>
+</div>
+
+
+{% endblock %}
