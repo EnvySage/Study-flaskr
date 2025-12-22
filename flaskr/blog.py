@@ -213,6 +213,12 @@ def user_profile(username):
                          posts=posts, 
                          post_count=post_count)
 
+@bp.route('/post/<int:id>')
+def post_detail(id):
+    """Show the full content of a single post"""
+    post = get_post(id, check_author=False)  # 不检查作者，允许所有人查看
+    return render_template('blog/post_detail.html', post=post)
+
 @bp.route('/check_nickname', methods=('POST',))
 @login_required
 def check_nickname():

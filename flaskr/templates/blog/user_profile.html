@@ -200,7 +200,7 @@
           {% for post in posts %}
             <article class="post-card">
               <div class="post-header">
-                <h3><a href="{{ url_for('blog.index') }}#post-{{ post.id }}">{{ post.title }}</a></h3>
+                <h3><a href="{{ url_for('blog.post_detail', id=post.id) }}">{{ post.title }}</a></h3>
                 <div class="post-meta">
                   <span class="post-date">
                     {% if post.created %}
@@ -222,7 +222,7 @@
                 <p>{{ post.body|truncate(200) }}</p>
               </div>
               <div class="post-footer">
-                <a href="{{ url_for('blog.index') }}#post-{{ post.id }}" class="read-more">阅读全文</a>
+                <a href="{{ url_for('blog.post_detail', id=post.id) }}" class="read-more">阅读全文</a>
               </div>
             </article>
           {% endfor %}

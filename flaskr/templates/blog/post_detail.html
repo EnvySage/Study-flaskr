@@ -1,0 +1,210 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <div class="section-header">
+    <h1>{% block title %}{{ post['title'] }} - 文章详情{% endblock %}</h1>
+  </div>
+{% endblock %}
+
+{% block content %}
+  <div class="post-detail-container">
+    <!-- 文章详情卡片 -->
+    <article class="post-card post-detail-card">
+      <div class="post-header">
+        <h2 class="post-title">{{ post['title'] }}</h2>
+        <div class="post-meta">
+          <span class="post-date">
+            {% if post['created'] %}
+              {% if post['created'] is string %}
+                {{ post['created'][:10] }}
+              {% else %}
+                {{ post['created'].strftime('%Y-%m-%d') }}
+              {% endif %}
+            {% else %}
+              未知时间
+            {% endif %}
+          </span>
+          <span class="post-author">作者：{{ post['username'] }}</span>
+          {% if g.user and g.user['user_id'] == post['author_id'] %}
+            <a class="edit-link" href="{{ url_for('blog.update', id=post['id']) }}">编辑</a>
+          {% endif %}
+        </div>
+      </div>
+      
+      <div class="post-content-full">
+        <div class="content-body">
+          {{ post['body']|safe }}
+        </div>
+      </div>
+      
+      <div class="post-footer">
+        <div class="post-actions" style="margin-top: 100px" >
+          {% if g.user and g.user['user_id'] == post['author_id'] %}
+            <form action="{{ url_for('blog.delete', id=post['id']) }}" method="post" class="delete-form">
+              <button class="btn btn-danger" type="submit" onclick="return confirm('确定要删除这篇文章吗？')">删除文章</button>
+            </form>
+          {% endif %}
+          <div>
+              <a class="btn" href="{{ url_for('blog.user_profile', username=post['username']) }}">查看作者主页</a>
+          </div>
+        <div>
+
+            <a class="btn btn-primary" href="{{ url_for('blog.index') }}">返回文章列表</a>
+        </div>
+        </div>
+      </div>
+    </article>
+  </div>
+{% endblock %}
+
+<style>
+.post-detail-container {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.post-detail-card {
+  background: var(--gray-100);
+  border-radius: var(--border-radius);
+  padding: 2rem;
+  border: 1px solid var(--gray-200);
+  box-shadow: var(--box-shadow);
+}
+
+.post-detail-card .post-header {
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--gray-300);
+}
+
+.post-detail-card .post-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--dark-color);
+  margin: 0 0 1rem 0;
+  line-height: 1.3;
+}
+
+.post-detail-card .post-meta {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  font-size: 0.9rem;
+  color: var(--gray-600);
+}
+
+.post-detail-card .post-author {
+  font-weight: 600;
+  color: var(--primary-color);
+}
+
+.post-detail-card .edit-link {
+  color: var(--primary-color);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.post-detail-card .edit-link:hover {
+  text-decoration: underline;
+}
+
+.post-content-full {
+  margin-bottom: 2rem;
+}
+
+.content-body {
+  line-height: 1.8;
+  font-size: 1.1rem;
+  color: var(--gray-700);
+  white-space: pre-line;
+}
+
+.content-body p {
+  margin-bottom: 1.5rem;
+}
+
+.post-detail-card .post-footer {
+  border-top: 1px solid var(--gray-300);
+  padding-top: 1.5rem;
+}
+
+.post-actions {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.post-actions .btn {
+  padding: 0.75rem 1.5rem;
+  text-decoration: none;
+  border-radius: var(--border-radius);
+  font-weight: 600;
+  transition: all 0.3s ease;
+  display: inline-block;
+}
+
+.post-actions .btn-primary {
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+  color: white;
+}
+
+.post-actions .btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--box-shadow-lg);
+}
+
+.post-actions .btn-danger {
+  background: linear-gradient(135deg, var(--danger-color), #e63946);
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+.post-actions .btn-danger:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--box-shadow-lg);
+}
+
+.post-actions .btn {
+  background: var(--gray-300);
+  color: var(--dark-color);
+}
+
+.post-actions .btn:hover {
+  background: var(--gray-400);
+  transform: translateY(-2px);
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .post-detail-container {
+    padding: 0 1rem;
+  }
+  
+  .post-detail-card {
+    padding: 1.5rem;
+  }
+  
+  .post-detail-card .post-title {
+    font-size: 1.5rem;
+  }
+  
+  .post-detail-card .post-meta {
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: flex-start;
+  }
+  
+  .post-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .post-actions .btn {
+    width: 100%;
+    text-align: center;
+  }
+}
+</style>
